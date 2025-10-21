@@ -2,10 +2,21 @@
  * Recipes service built on top of mock data for now.
  * Exposes listRecipes and getRecipeById with simulated latency.
  * When backend is ready, swap data source to httpClient + mappers.
+ *
+ * Integration docs:
+ * See docs/INTEGRATION_NOTES.md for API contracts and environment variables.
+ * - VITE_USE_MOCK_DATA: "true"/"false" to toggle between mock and backend
+ * - VITE_API_BASE_URL: base URL for backend
+ *
+ * TODO (integration):
+ * - Read import.meta.env.VITE_USE_MOCK_DATA and if false use httpFetch().
+ * - Wire list endpoint to /recipes and detail to /recipes/{id}.
+ * - Map responses via mapRecipesList/mapRecipe.
  */
 
 import data from '../data/recipes.json'
 import { mapRecipe, mapRecipesList } from './mappers'
+// import { httpFetch } from './httpClient' // Uncomment when enabling backend
 
 // Simulated network latency in milliseconds
 const MIN_LATENCY = 200
@@ -32,8 +43,32 @@ export async function listRecipes({ query = '', filters = {}, sort = { by: 'rati
   await sleep(randomLatency())
 
   // For future API switching:
-  // const resp = await httpFetch('/recipes', { method: 'GET' })
-  // let all = mapRecipesList(resp?.data)
+  // const useMock = String(import.meta?.env?.VITE_USE_MOCK_DATA ?? 'true') === 'true'
+  // if (!useMock) {
+  //   const params = new URLSearchParams({
+  //     query,
+  //     difficulty: filters?.difficulty ?? '',
+  //     categories: (filters?.categories || []).join(','),
+  //     tags: (filters?.tags || []).join(','),
+  //     maxCookTime: filters?.maxCookTime ?? '',
+  //     minRating: filters?.minRating ?? '',
+  //     sortBy: sort?.by ?? 'rating',
+  //     sortDir: sort?.dir ?? 'desc',
+  //     page: String(page ?? 1),
+  //     pageSize: String(pageSize ?? 8),
+  //   })
+  //   const resp = await httpFetch(`/recipes?${params.toString()}`, { method: 'GET' })
+  //   // If backend returns { items, total, page, pageSize, totalPages } use it directly after mapping
+  //   const items = mapRecipesList(resp?.items ?? [])
+  //   return {
+  //     items,
+  //     total: Number(resp?.total ?? items.length),
+  //     page: Number(resp?.page ?? page),
+  //     pageSize: Number(resp?.pageSize ?? pageSize),
+  //     totalPages: Number(resp?.totalPages ?? Math.max(1, Math.ceil((resp?.total ?? items.length) / (resp?.pageSize ?? pageSize)))),
+  //   }
+  // }
+
   let all = mapRecipesList(data)
 
   // Text search against title, tags, categories, ingredients
@@ -111,9 +146,13 @@ export async function listRecipes({ query = '', filters = {}, sort = { by: 'rati
 export async function getRecipeById(id) {
   /** Returns a single recipe by id from mock data with simulated latency. */
   await sleep(randomLatency())
+
   // Future API call:
-  // const resp = await httpFetch(`/recipes/${id}`, { method: 'GET' })
-  // return mapRecipe(resp?.data)
+  // const useMock = String(import.meta?.env?.VITE_USE_MOCK_DATA ?? 'true') === 'true'
+  // if (!useMock) {
+  //   const resp = await httpFetch(`/recipes/${id}`, { method: 'GET' })
+  //   return mapRecipe(resp)
+  // }
 
   const found = (data || []).find((r) => String(r.id) === String(id))
   return mapRecipe(found) || null
