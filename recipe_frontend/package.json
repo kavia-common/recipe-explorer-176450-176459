@@ -9,18 +9,26 @@
     "lint": "eslint '**/*.js'",
     "lint:fix": "eslint '**/*.js' --fix",
     "build": "vite build",
-    "dev": "vite dev"
+    "dev": "vite dev",
+    "test": "vitest run --reporter=dot",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "vite": "5.4.8",
     "@eslint/eslintrc": "3.1.0",
     "@eslint/js": "9.11.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "9.11.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
     "globals": "15.9.0",
+    "jsdom": "^26.1.0",
     "lint-staged": "15.2.10",
-    "prettier": "3.3.3"
+    "prettier": "3.3.3",
+    "vite": "5.4.8",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@lightningjs/blits": "1.29.2"
