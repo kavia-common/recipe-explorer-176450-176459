@@ -16,6 +16,7 @@ export default Blits.Component('RecipesList', {
       gutter: 20,
       cardW: 400,
       cardH: 240,
+      focusIndex: 0,
     }
   },
 
@@ -51,7 +52,7 @@ export default Blits.Component('RecipesList', {
             :w="$cardW"
             :h="$cardH"
           >
-            <RecipeCard :recipe="$item" />
+            <RecipeCard :recipe="$item" :alpha="$isFocused($index) ? 1 : 0.96" :scale="$isFocused($index) ? 1.02 : 1" />
           </Element>
         </Element>
 
@@ -76,6 +77,47 @@ export default Blits.Component('RecipesList', {
     error() {
       return store.state.error
     },
+    totalOnPage() {
+      return this.pageItems.length
+    }
+  },
+
+  methods: {
+    // PUBLIC_INTERFACE
+    /** Whether index is currently focused for visual cues. */
+    $isFocused(i) {
+      return this.focusIndex === i
+    },
+    // PUBLIC_INTERFACE
+    /** Move focus in grid by delta, clamped to items on current page. */
+    moveFocus(delta) {
+      const max = Math.max(0, this.totalOnPage - 1)
+      this.focusIndex = Math.max(0, Math.min(max, this.focusIndex + delta))
+    },
+    // PUBLIC_INTERFACE
+    /** Move focus up/down a row (gridCols). */
+    moveRow(deltaRows) {
+      this.moveFocus(deltaRows * this.gridCols)
+    },
+  },
+
+  input: {
+    left() { this.moveFocus(-1) },
+    right() { this.moveFocus(1) },
+    up() { this.moveRow(-1) },
+    down() { this.moveRow(1) },
+    enter() {
+      // Delegate to focused card's enter (navigates to detail)
+      const idx = this.focusIndex
+      const item = this.pageItems[idx]
+      if (!item) return
+      if (this.$router) {
+        this.$router.to(`/recipe/${item.id}`)
+      }
+    },
+    back(e) {
+      this.parent && this.parent.focus && this.parent.focus(e)
+    }
   },
 
   async mounted() {
@@ -89,5 +131,6 @@ export default Blits.Component('RecipesList', {
     }
     // clamp page
     if (store.state.pagination.page < 1) setPage(1)
+    this.focusIndex = 0
   },
 })

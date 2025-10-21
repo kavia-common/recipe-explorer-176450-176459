@@ -1,6 +1,6 @@
 import Blits from '@lightningjs/blits'
 import store from '../state/store.js'
-import { applyFilters } from '../state/actions.js'
+import { applyFilters, setSort } from '../state/actions.js'
 
 /**
  * SidebarFilters
@@ -15,35 +15,40 @@ export default Blits.Component('SidebarFilters', {
       difficultyIndex: 0,
       maxTimeOptions: [null, 15, 30, 45, 60],
       maxTimeIndex: 0,
+      sortBy: ['rating', 'time', 'title'],
+      sortIndex: 0,
+      sortDir: ['desc', 'asc'],
+      sortDirIndex: 0,
     }
   },
 
   template: `
-    <Element w="420" h="940" color="0xFFFFFFFF">
+    <Element w="420" h="940" color="0xFFFFFFFF" rect="true">
       <Text content="Filters" x="10" y="10" color="0x111827FF" fontSize="28" />
 
       <Text :content="'Cuisine: ' + ($currentCuisine || 'Any')" x="10" y="60" fontSize="24" color="0x2563EBFF" />
       <Text :content="'Difficulty: ' + ($currentDifficulty || 'Any')" x="10" y="100" fontSize="24" color="0x2563EBFF" />
       <Text :content="'Max Time: ' + ($currentMaxTime === null ? 'Any' : ($currentMaxTime + ' min'))" x="10" y="140" fontSize="24" color="0x2563EBFF" />
 
-      <Text content="Use Left/Right to cycle Cuisine" x="10" y="200" fontSize="20" color="0x111827FF" />
-      <Text content="Use Up/Down to cycle Difficulty" x="10" y="230" fontSize="20" color="0x111827FF" />
-      <Text content="Press Enter to cycle Max Time" x="10" y="260" fontSize="20" color="0x111827FF" />
+      <Text content="Use Left/Right: Cuisine" x="10" y="200" fontSize="20" color="0x111827FF" />
+      <Text content="Use Up/Down: Difficulty" x="10" y="230" fontSize="20" color="0x111827FF" />
+      <Text content="Enter: Max Time" x="10" y="260" fontSize="20" color="0x111827FF" />
+
+      <Element x="10" y="320" w="380" h="120">
+        <Text content="Sort" fontSize="24" color="0x111827FF" />
+        <Text :content="'By: ' + $currentSortBy" y="36" fontSize="22" color="0x2563EBFF" />
+        <Text :content="'Direction: ' + $currentSortDir" y="68" fontSize="22" color="0x2563EBFF" />
+        <Text content="[Blue] Cycle sort by   [Yellow] Toggle direction" y="96" fontSize="18" color="0x6B7280FF" />
+      </Element>
     </Element>
   `,
 
   computed: {
-    currentCuisine() {
-      const c = this.cuisines[this.cuisineIndex] ?? null
-      return c
-    },
-    currentDifficulty() {
-      const d = this.difficulties[this.difficultyIndex] ?? null
-      return d
-    },
-    currentMaxTime() {
-      return this.maxTimeOptions[this.maxTimeIndex] ?? null
-    },
+    currentCuisine() { return this.cuisines[this.cuisineIndex] ?? null },
+    currentDifficulty() { return this.difficulties[this.difficultyIndex] ?? null },
+    currentMaxTime() { return this.maxTimeOptions[this.maxTimeIndex] ?? null },
+    currentSortBy() { return this.sortBy[this.sortIndex] || 'rating' },
+    currentSortDir() { return this.sortDir[this.sortDirIndex] || 'desc' },
   },
 
   methods: {
@@ -54,6 +59,10 @@ export default Blits.Component('SidebarFilters', {
         maxTime: this.currentMaxTime,
       })
     },
+    updateSort() {
+      // map 'time' -> store's 'time' key
+      setSort({ by: this.currentSortBy, direction: this.currentSortDir })
+    }
   },
 
   mounted() {
@@ -65,6 +74,13 @@ export default Blits.Component('SidebarFilters', {
     if (ci >= 0) this.cuisineIndex = ci
     if (di >= 0) this.difficultyIndex = di
     if (ti >= 0) this.maxTimeIndex = ti
+
+    const sBy = store.state.sort.by
+    const sDir = store.state.sort.direction
+    const sbi = this.sortBy.indexOf(sBy)
+    const sdi = this.sortDir.indexOf(sDir)
+    if (sbi >= 0) this.sortIndex = sbi
+    if (sdi >= 0) this.sortDirIndex = sdi
   },
 
   input: {
@@ -87,6 +103,16 @@ export default Blits.Component('SidebarFilters', {
     enter() {
       this.maxTimeIndex = (this.maxTimeIndex + 1) % this.maxTimeOptions.length
       this.updateFilters()
+    },
+    blue() {
+      // cycle sort by
+      this.sortIndex = (this.sortIndex + 1) % this.sortBy.length
+      this.updateSort()
+    },
+    yellow() {
+      // toggle dir
+      this.sortDirIndex = (this.sortDirIndex + 1) % this.sortDir.length
+      this.updateSort()
     },
     back(e) {
       // bubble back if unhandled
