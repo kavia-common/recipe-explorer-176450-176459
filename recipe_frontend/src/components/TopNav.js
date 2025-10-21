@@ -1,11 +1,12 @@
 import Blits from '@lightningjs/blits'
 import SearchBar from './SearchBar.js'
+import { t } from '../plugins/i18n.js'
 
 /**
- * Top navigation bar for the Recipe Explorer.
- * - Keyboard navigation (left/right/enter/back)
- * - Deep links via RouterLink to '/', '/search'
- * - Integrates SearchBar placeholder (non-functional for now)
+ * Top navigation bar for the Recipe Explorer with accessibility enhancements.
+ * - Skip to content link (keyboard only)
+ * - ARIA roles for banner/nav
+ * - Keyboard navigation preserved
  */
 export default Blits.Component('TopNav', {
   components: { SearchBar },
@@ -16,16 +17,28 @@ export default Blits.Component('TopNav', {
       items: [
         { id: 'home', label: 'Home', path: '/' },
         { id: 'search', label: 'Search', path: '/search' }
-      ]
+      ],
+      skipText: t('a11y.skip_to_content', 'Skip to main content'),
     }
   },
   template: `
-    <Element w="1920" h="96" :color="$barColor" rect="true">
+    <Element w="1920" h="96" :color="$barColor" rect="true" role="banner" aria-label="Top navigation">
+      <!-- Skip link (visually hidden until focused). Triggers focus on main content via method -->
+      <Element x="16" y="0">
+        <Text
+          :content="$skipText"
+          role="link"
+          aria-label="Skip to main content"
+          class="skip-link"
+          @enter="$skipToContent"
+        />
+      </Element>
+
       <!-- Brand -->
       <Text x="60" y="28" :content="$title" fontSize="36" :textColor="$titleColor" />
 
       <!-- Nav buttons -->
-      <Element x="360" y="24" w="420" h="48">
+      <Element x="360" y="24" w="420" h="48" role="navigation" aria-label="Primary">
         <RouterLink
           :for="(item, index) in $items"
           :key="$item.id"
@@ -39,6 +52,8 @@ export default Blits.Component('TopNav', {
             :color="$isFocused($index) ? $primary : 0x00111827"
             rect="true"
             :alpha="$isFocused($index) ? 1 : 0.6"
+            role="button"
+            :aria-label="$item.label"
           >
             <Text x="20" y="10" :content="$item.label" fontSize="26" :textColor="$isFocused($index) ? 0xffffffff : 0xffe5e7eb" />
           </Element>
@@ -46,7 +61,7 @@ export default Blits.Component('TopNav', {
       </Element>
 
       <!-- SearchBar placeholder on the right -->
-      <Element :x="$searchX" y="20" w="620" h="56">
+      <Element :x="$searchX" y="20" w="620" h="56" aria-label="Site search">
         <SearchBar placeholder="Search recipes (placeholder)" />
       </Element>
     </Element>
@@ -73,6 +88,16 @@ export default Blits.Component('TopNav', {
       const active = this.items[this.focusIndex]
       if (active && this.$router) {
         this.$router.to(active.path)
+      }
+    },
+    // PUBLIC_INTERFACE
+    /** Focus main content area exposed by pages as ref="mainContent". */
+    $skipToContent() {
+      const view = this.app && this.app.$children && this.app.$children.find && this.app.$children.find(c => !!c.$refs?.mainContent)
+      if (view && view.$refs && typeof view.$refs.mainContent.focus === 'function') {
+        view.$refs.mainContent.focus()
+      } else if (this.parent && typeof this.parent.focus === 'function') {
+        this.parent.focus({ target: 'main' })
       }
     }
   },

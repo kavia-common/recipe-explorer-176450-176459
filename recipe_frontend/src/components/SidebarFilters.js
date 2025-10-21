@@ -1,10 +1,12 @@
 import Blits from '@lightningjs/blits'
 import store from '../state/store.js'
 import { applyFilters, setSort } from '../state/actions.js'
+import { t } from '../plugins/i18n.js'
 
 /**
  * SidebarFilters
  * Shows current filters and allows cycling through demo filter options using remote keys.
+ * Adds ARIA roles/labels for better a11y.
  */
 export default Blits.Component('SidebarFilters', {
   state() {
@@ -23,18 +25,20 @@ export default Blits.Component('SidebarFilters', {
   },
 
   template: `
-    <Element w="420" h="940" color="0xFFFFFFFF" rect="true">
-      <Text content="Filters" x="10" y="10" color="0x111827FF" fontSize="28" />
+    <Element w="420" h="940" color="0xFFFFFFFF" rect="true" role="complementary" aria-label="Filters panel">
+      <Element x="10" y="10" role="button" :aria-label="$toggleLabel">
+        <Text content="Filters" color="0x111827FF" fontSize="28" />
+      </Element>
 
-      <Text :content="'Cuisine: ' + ($currentCuisine || 'Any')" x="10" y="60" fontSize="24" color="0x2563EBFF" />
-      <Text :content="'Difficulty: ' + ($currentDifficulty || 'Any')" x="10" y="100" fontSize="24" color="0x2563EBFF" />
-      <Text :content="'Max Time: ' + ($currentMaxTime === null ? 'Any' : ($currentMaxTime + ' min'))" x="10" y="140" fontSize="24" color="0x2563EBFF" />
+      <Text :content="'Cuisine: ' + ($currentCuisine || 'Any')" x="10" y="60" fontSize="24" color="0x2563EBFF" role="note" aria-label="Cuisine filter" />
+      <Text :content="'Difficulty: ' + ($currentDifficulty || 'Any')" x="10" y="100" fontSize="24" color="0x2563EBFF" role="note" aria-label="Difficulty filter" />
+      <Text :content="'Max Time: ' + ($currentMaxTime === null ? 'Any' : ($currentMaxTime + ' min'))" x="10" y="140" fontSize="24" color="0x2563EBFF" role="note" aria-label="Maximum time filter" />
 
       <Text content="Use Left/Right: Cuisine" x="10" y="200" fontSize="20" color="0x111827FF" />
       <Text content="Use Up/Down: Difficulty" x="10" y="230" fontSize="20" color="0x111827FF" />
       <Text content="Enter: Max Time" x="10" y="260" fontSize="20" color="0x111827FF" />
 
-      <Element x="10" y="320" w="380" h="120">
+      <Element x="10" y="320" w="380" h="120" role="group" aria-label="Sort options">
         <Text content="Sort" fontSize="24" color="0x111827FF" />
         <Text :content="'By: ' + $currentSortBy" y="36" fontSize="22" color="0x2563EBFF" />
         <Text :content="'Direction: ' + $currentSortDir" y="68" fontSize="22" color="0x2563EBFF" />
@@ -49,6 +53,7 @@ export default Blits.Component('SidebarFilters', {
     currentMaxTime() { return this.maxTimeOptions[this.maxTimeIndex] ?? null },
     currentSortBy() { return this.sortBy[this.sortIndex] || 'rating' },
     currentSortDir() { return this.sortDir[this.sortDirIndex] || 'desc' },
+    toggleLabel() { return t('a11y.filter.toggle', 'Toggle filter') },
   },
 
   methods: {

@@ -2,7 +2,7 @@ import Blits from '@lightningjs/blits'
 
 export default Blits.Component('Loader', {
   template: `
-    <Element>
+    <Element role="status" aria-live="polite" aria-atomic="true">
       <Circle size="40" :color="$loaderColor || '#94a3b8'" :alpha.transition="{value: $alpha, delay: 200}" />
       <Circle size="40" :color="$loaderColor || '#94a3b8'" x="60" :alpha.transition="{value: $alpha, delay: 300}" />
       <Circle size="40" :color="$loaderColor || '#94a3b8'" x="120" :alpha.transition="{value: $alpha, delay: 400}" />

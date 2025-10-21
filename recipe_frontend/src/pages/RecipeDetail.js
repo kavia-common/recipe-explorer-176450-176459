@@ -15,6 +15,7 @@ import Tag from '../components/Tag.js'
  * - Favorite toggle and Back to list (preserves list state)
  * - Keyboard navigation: switch focus across [Back, Fav, Ingredients, Steps, Nutrition]
  * - Uses theme tokens for colors and spacing
+ * - Adds main landmark for skip link targeting
  */
 export default Blits.Component('RecipeDetail', {
   components: { Loader, RatingStars, Badge, Tag },
@@ -159,7 +160,7 @@ export default Blits.Component('RecipeDetail', {
   },
 
   template: `
-    <Element w="1824" h="912" x="0" y="0">
+    <Element w="1824" h="912" x="0" y="0" role="main" aria-label="Recipe detail" ref="mainContent">
       <!-- Loading and error states -->
       <Element :alpha="$loading ? 1 : 0" x="40" y="40"><Loader /></Element>
       <Element :alpha="$error && !$loading ? 1 : 0" x="40" y="40"><Text :content="$error" fontSize="28" :color="$danger" /></Element>
@@ -172,6 +173,9 @@ export default Blits.Component('RecipeDetail', {
             x="0" y="0" w="160" h="56" rect="true"
             :color="$isHeaderFocused(0) ? 0x2563EB22 : 0x00000000"
             :alpha="$isHeaderFocused(0) ? 1 : 0.85"
+            role="button"
+            aria-label="Back to list"
+            @enter="$backToList"
           >
             <Text content="← Back" x="16" y="12" fontSize="28" :color="$isHeaderFocused(0) ? $primary : $muted" />
           </Element>
@@ -181,6 +185,10 @@ export default Blits.Component('RecipeDetail', {
             x="172" y="0" w="220" h="56" rect="true"
             :color="$isHeaderFocused(1) ? 0xF59E0B22 : 0x00000000"
             :alpha="$isHeaderFocused(1) ? 1 : 0.85"
+            role="button"
+            :aria-pressed="$isFav"
+            aria-label="Toggle favorite"
+            @enter="$favToggle"
           >
             <Text :content="$isFav ? '★ Favorited' : '☆ Favorite'" x="16" y="12" fontSize="28" :color="$isFav ? $accent : $muted" />
           </Element>
@@ -189,22 +197,22 @@ export default Blits.Component('RecipeDetail', {
         <!-- Hero section -->
         <Element x="40" y="96" w="1744" h="260" rect="true" :color="$surface" :alpha="1">
           <!-- Image placeholder block (replace with image when available) -->
-          <Element x="16" y="16" :w="$heroW" :h="$heroH" rect="true" color="0xffE5E7EB">
+          <Element x="16" y="16" :w="$heroW" :h="$heroH" rect="true" color="0xffE5E7EB" role="img" aria-label="Recipe image">
             <Text content="Image" x="20" y="20" fontSize="22" :color="$muted" />
           </Element>
 
           <!-- Title and meta -->
           <Element :x="16 + $heroW + 24" y="16" w="800" :h="$heroH">
             <Text :content="$recipe?.title || 'Recipe not found'" fontSize="40" :color="$text" />
-            <Element y="56" w="600" h="28">
+            <Element y="56" w="600" h="28" role="img" aria-label="Rating">
               <RatingStars :value="$recipe?.rating || 0" :count="$recipe?.reviews || 0" />
             </Element>
-            <Element y="100" w="760" h="40">
+            <Element y="100" w="760" h="40" role="group" aria-label="Recipe metadata">
               <Badge :label="'Time: ' + ($recipe?.cookTime || 0) + 'm'" />
               <Badge :label="'Serves: ' + ($recipe?.servings || 0)" :x="220" />
               <Badge :label="'Difficulty: ' + ($recipe?.difficulty || '—')" :x="440" />
             </Element>
-            <Element y="152" w="760" h="84">
+            <Element y="152" w="760" h="84" role="group" aria-label="Recipe tags">
               <Element :for="(t, i) in $recipe?.tags || []" :key="$t" :x="($i%5)*150" :y="Math.floor($i/5)*44">
                 <Tag :text="$t" />
               </Element>
@@ -215,7 +223,7 @@ export default Blits.Component('RecipeDetail', {
         <!-- Content columns -->
         <Element x="40" y="372" w="1744" h="520">
           <!-- Ingredients -->
-          <Element x="0" y="0" w="540" h="520" rect="true" :color="$surface" :alpha="1">
+          <Element x="0" y="0" w="540" h="520" rect="true" :color="$surface" :alpha="1" role="region" aria-label="Ingredients">
             <Text content="Ingredients" x="16" y="12" fontSize="28" :color="$text" />
             <Element y="52" x="8" w="520" h="460">
               <Element
@@ -225,6 +233,10 @@ export default Blits.Component('RecipeDetail', {
                 w="520" h="32"
                 rect="true"
                 :color="$isIngredientFocused($idx) ? 0x2563EB18 : 0x00000000"
+                role="checkbox"
+                :aria-checked="$checked[$idx]"
+                :aria-label="$ing"
+                @enter="$toggleIngredient($idx)"
               >
                 <!-- Checkbox -->
                 <Element :x="8" y="4" w="24" h="24" rect="true" color="0xffE5E7EB">
@@ -242,7 +254,7 @@ export default Blits.Component('RecipeDetail', {
           </Element>
 
           <!-- Steps -->
-          <Element x="564" y="0" w="620" h="520" rect="true" :color="$surface" :alpha="1">
+          <Element x="564" y="0" w="620" h="520" rect="true" :color="$surface" :alpha="1" role="region" aria-label="Steps">
             <Text content="Steps" x="16" y="12" fontSize="28" :color="$text" />
             <Element y="52" x="8" w="604" h="440">
               <Element
@@ -260,7 +272,7 @@ export default Blits.Component('RecipeDetail', {
           </Element>
 
           <!-- Nutrition -->
-          <Element x="1208" y="0" w="536" h="520" rect="true" :color="$surface" :alpha="1">
+          <Element x="1208" y="0" w="536" h="520" rect="true" :color="$surface" :alpha="1" role="region" aria-label="Nutrition">
             <Text content="Nutrition" x="16" y="12" fontSize="28" :color="$text" />
             <Element x="16" y="56" w="504" h="440">
               <Badge :label="'Calories: ' + (($recipe?.nutrition?.calories) || '—')" />

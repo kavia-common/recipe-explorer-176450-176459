@@ -6,9 +6,11 @@ import SearchBar from '../components/SearchBar.js'
 import RecipeCard from '../components/RecipeCard.js'
 import Pagination from '../components/Pagination.js'
 import Loader from '../components/Loader.js'
+import LiveRegion from '../components/LiveRegion.js'
+import { t } from '../plugins/i18n.js'
 
 export default Blits.Component('RecipesList', {
-  components: { SidebarFilters, SearchBar, RecipeCard, Pagination, Loader },
+  components: { SidebarFilters, SearchBar, RecipeCard, Pagination, Loader, LiveRegion },
 
   state() {
     return {
@@ -27,8 +29,8 @@ export default Blits.Component('RecipesList', {
         <SidebarFilters />
       </Element>
 
-      <!-- Main content -->
-      <Element x="500" y="20" w="1380" h="940">
+      <!-- Main content landmark with ref for skip link -->
+      <Element x="500" y="20" w="1380" h="940" role="main" aria-label="Recipes" ref="mainContent">
         <!-- Search Row -->
         <Element x="0" y="0" w="1380" h="80">
           <SearchBar />
@@ -38,12 +40,12 @@ export default Blits.Component('RecipesList', {
         <Element x="0" y="90" w="1380" h="60" :alpha="$error ? 1 : 0">
           <Text :content="$error" w="1200" h="60" fontSize="28" color="0xEF4444FF" />
         </Element>
-        <Element x="0" y="90" w="1380" h="60" :alpha="$loading ? 1 : 0">
+        <Element x="0" y="90" w="1380" h="60" :alpha="$loading ? 1 : 0" role="status" aria-live="polite" aria-atomic="true">
           <Loader />
         </Element>
 
         <!-- Grid of recipes -->
-        <Element x="0" :y="$loading || $error ? 160 : 100" w="1380" h="760">
+        <Element x="0" :y="$loading || $error ? 160 : 100" w="1380" h="760" role="region" aria-label="Search results" id="recipes-results">
           <Element
             :for="(item, index) in $pageItems"
             :key="$item.id"
@@ -60,6 +62,9 @@ export default Blits.Component('RecipesList', {
         <Element x="0" y="880" w="1380" h="60">
           <Pagination />
         </Element>
+
+        <!-- Live region for announcements -->
+        <LiveRegion ref="liveRegion" />
       </Element>
     </Element>
   `,
@@ -99,24 +104,19 @@ export default Blits.Component('RecipesList', {
     moveRow(deltaRows) {
       this.moveFocus(deltaRows * this.gridCols)
     },
+    // PUBLIC_INTERFACE
+    /** Announce via page LiveRegion if available */
+    $announce(msg, tone = 'polite') {
+      if (this.$refs && this.$refs.liveRegion && this.$refs.liveRegion.announce) {
+        this.$refs.liveRegion.announce(msg, { politeness: tone })
+      }
+    }
   },
 
-  input: {
-    left() { this.moveFocus(-1) },
-    right() { this.moveFocus(1) },
-    up() { this.moveRow(-1) },
-    down() { this.moveRow(1) },
-    enter() {
-      // Delegate to focused card's enter (navigates to detail)
-      const idx = this.focusIndex
-      const item = this.pageItems[idx]
-      if (!item) return
-      if (this.$router) {
-        this.$router.to(`/recipe/${item.id}`)
-      }
-    },
-    back(e) {
-      this.parent && this.parent.focus && this.parent.focus(e)
+  watch: {
+    loading(v) {
+      if (v) this.$announce(t('a11y.loading', 'Loading'))
+      else this.$announce(t('a11y.loaded', 'Loaded'))
     }
   },
 
@@ -124,7 +124,9 @@ export default Blits.Component('RecipesList', {
     // Ensure favorites in memory then load recipes if not loaded
     store.hydrateFavorites()
     if (!store.state.recipes || store.state.recipes.length === 0) {
+      this.$announce(t('a11y.loading', 'Loading'))
       await loadRecipes()
+      this.$announce(t('a11y.loaded', 'Loaded'))
     } else {
       // recompute filtered from existing recipes
       store.setRecipes(store.state.recipes)

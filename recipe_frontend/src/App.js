@@ -1,14 +1,17 @@
 import Blits from '@lightningjs/blits'
 import routes from './router/index.js'
 import TopNav from './components/TopNav.js'
+import i18n from './plugins/i18n.js'
 
 /**
  * Root Application
  * - Sets background and a surface container
  * - Renders TopNav and RouterView
  * - Registers routes for '/', '/recipe/:id', optional '/search', and 404 fallback
+ * - Installs i18n plugin (provides $t)
  */
 export default Blits.Application({
+  use: [i18n],
   components: { TopNav },
   template: `
     <Element w="1920" h="1080">

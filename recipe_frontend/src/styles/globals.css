@@ -64,3 +64,25 @@ body {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+/* Skip link styling (for keyboard users) */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #111827;
+  color: #ffffff;
+  padding: 10px 16px;
+  z-index: 9999;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(17,24,39,0.35);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 16px;
+  opacity: 1;
+  transform: translateY(8px);
+}
