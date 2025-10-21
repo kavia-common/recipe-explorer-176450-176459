@@ -43,6 +43,7 @@ export async function listRecipes({ query = '', filters = {}, sort = { by: 'rati
   await sleep(randomLatency())
 
   // For future API switching:
+  // See docs/INTEGRATION_NOTES.md for details on VITE_USE_MOCK_DATA and VITE_API_BASE_URL
   // const useMock = String(import.meta?.env?.VITE_USE_MOCK_DATA ?? 'true') === 'true'
   // if (!useMock) {
   //   const params = new URLSearchParams({

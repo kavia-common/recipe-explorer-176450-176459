@@ -15,7 +15,7 @@ const DEFAULT_TIMEOUT_MS = 15000
 export function getBaseUrl() {
   /** Returns the backend base URL from env (if configured). */
   // NOTE: Vite exposes env vars as import.meta.env
-  // TODO: Provide a .env.example including VITE_API_BASE_URL.
+  // TODO: Provide a .env.example including VITE_API_BASE_URL and VITE_USE_MOCK_DATA.
   return (import.meta?.env?.VITE_API_BASE_URL || '').toString()
 }
 
