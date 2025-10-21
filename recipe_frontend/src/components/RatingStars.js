@@ -3,6 +3,9 @@ import Blits from '@lightningjs/blits'
 /**
  * RatingStars
  * Renders a 5-star rating visualization plus count.
+ * Props:
+ *  - value: number (0-5)
+ *  - count: number of reviews
  */
 export default Blits.Component('RatingStars', {
   props: ['value', 'count'],

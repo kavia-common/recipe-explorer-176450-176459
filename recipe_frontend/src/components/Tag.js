@@ -1,8 +1,10 @@
 import Blits from '@lightningjs/blits'
 
 /**
- * Tag Component - Placeholder
- * Displays a minimal tag pill.
+ * Tag Component
+ * Simple pill with amber background.
+ * Props:
+ *  - text: string label
  */
 export default Blits.Component('Tag', {
   props: ['text'],
