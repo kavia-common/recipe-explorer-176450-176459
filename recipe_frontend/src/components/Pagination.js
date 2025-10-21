@@ -1,14 +1,43 @@
 import Blits from '@lightningjs/blits'
+import store from '../state/store.js'
+import { setPage } from '../state/actions.js'
 
-/**
- * Pagination Component - Placeholder
- * Displays a minimal pagination text.
- */
 export default Blits.Component('Pagination', {
-  props: ['page', 'totalPages'],
   template: `
-    <Element w="260" h="40" color="0x00000000">
-      <Text x="0" y="0" :content="'Page ' + ($page || 1) + ' / ' + ($totalPages || 1)" fontSize="22" textColor="0xff111827" />
+    <Element w="1380" h="60" color="0xFFFFFFFF">
+      <Text :content="'Page ' + $page + ' / ' + $totalPages" x="10" y="8" color="0x111827FF" fontSize="24" />
+      <Text :content="'Total: ' + $total" x="250" y="8" color="0x6B7280FF" fontSize="20" />
+      <Text content="[Left] Prev  [Right] Next" x="10" y="34" color="0x2563EBFF" fontSize="20" />
     </Element>
-  `
+  `,
+
+  computed: {
+    page() {
+      return store.state.pagination.page
+    },
+    pageSize() {
+      return store.state.pagination.pageSize
+    },
+    total() {
+      return store.state.pagination.total
+    },
+    totalPages() {
+      return Math.max(1, Math.ceil(this.total / this.pageSize))
+    },
+  },
+
+  input: {
+    left() {
+      const p = Math.max(1, store.state.pagination.page - 1)
+      setPage(p)
+    },
+    right() {
+      const tp = Math.max(1, Math.ceil(store.state.pagination.total / store.state.pagination.pageSize))
+      const p = Math.min(tp, store.state.pagination.page + 1)
+      setPage(p)
+    },
+    back(e) {
+      this.parent && this.parent.focus && this.parent.focus(e)
+    },
+  },
 })

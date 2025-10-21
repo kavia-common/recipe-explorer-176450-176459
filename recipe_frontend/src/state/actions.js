@@ -1,28 +1,42 @@
- /**
-  * Action constants and creators - Placeholder
-  */
+import store from './store.js'
+
+/**
+ * Action layer for Recipe Explorer.
+ * Components should import actions to interact with the global store.
+ */
 
 // PUBLIC_INTERFACE
-export const ACTIONS = {
-  SET_RECIPES: 'SET_RECIPES',
-  SET_SELECTED_RECIPE: 'SET_SELECTED_RECIPE',
-  SET_QUERY: 'SET_QUERY'
+/** Load recipes from service, handles loading and error states. */
+export async function loadRecipes() {
+  await store.loadRecipes()
 }
 
 // PUBLIC_INTERFACE
-export function setRecipes(recipes) {
-  /** Creates action for setting recipe list. */
-  return { type: ACTIONS.SET_RECIPES, payload: recipes || [] }
+/** Apply a partial set of filters (e.g., { cuisine, difficulty, tags, maxTime }). */
+export function applyFilters(partialFilters) {
+  store.setFilters(partialFilters)
 }
 
 // PUBLIC_INTERFACE
-export function setSelectedRecipe(id) {
-  /** Creates action for selecting recipe id. */
-  return { type: ACTIONS.SET_SELECTED_RECIPE, payload: id || null }
+/** Set the search query string to filter recipes by title/description/ingredients. */
+export function setQuery(query) {
+  store.setQuery(query)
 }
 
 // PUBLIC_INTERFACE
-export function setQuery(q) {
-  /** Creates action for setting search query. */
-  return { type: ACTIONS.SET_QUERY, payload: q || '' }
+/** Toggle favorite status for a recipe id and persist to localStorage. */
+export function toggleFavorite(recipeId) {
+  store.toggleFavorite(recipeId)
+}
+
+// PUBLIC_INTERFACE
+/** Set pagination page number. */
+export function setPage(page) {
+  store.setPage(page)
+}
+
+// PUBLIC_INTERFACE
+/** Set sorting and recompute (by: rating|time|title, direction: asc|desc). */
+export function setSort(sort) {
+  store.setSort(sort)
 }

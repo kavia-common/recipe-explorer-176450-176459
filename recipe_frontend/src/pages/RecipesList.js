@@ -1,92 +1,93 @@
 import Blits from '@lightningjs/blits'
-import { listRecipes } from '../services/recipesService.js'
-import RecipeCard from '../components/RecipeCard.js'
-import Loader from '../components/Loader.js'
-import Pagination from '../components/Pagination.js'
+import store from '../state/store.js'
+import { loadRecipes, setPage } from '../state/actions.js'
 import SidebarFilters from '../components/SidebarFilters.js'
 import SearchBar from '../components/SearchBar.js'
+import RecipeCard from '../components/RecipeCard.js'
+import Pagination from '../components/Pagination.js'
+import Loader from '../components/Loader.js'
 
 export default Blits.Component('RecipesList', {
-  components: { RecipeCard, Loader, Pagination, SidebarFilters, SearchBar },
+  components: { SidebarFilters, SearchBar, RecipeCard, Pagination, Loader },
+
   state() {
     return {
-      loading: true,
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 9,
-      sort: { by: 'rating', dir: 'desc' },
-      query: '',
-      filters: {}
+      gridCols: 3, // number of columns for cards
+      gutter: 20,
+      cardW: 400,
+      cardH: 240,
     }
   },
-  methods: {
-    async load() {
-      this.loading = true
-      try {
-        const res = await listRecipes({
-          query: this.query,
-          filters: this.filters,
-          sort: this.sort,
-          page: this.page,
-          pageSize: this.pageSize
-        })
-        this.items = res.items
-        this.total = res.total
-      } finally {
-        this.loading = false
-      }
-    },
-    // PUBLIC_INTERFACE
-    async onSearch(q) {
-      this.query = q || ''
-      this.page = 1
-      await this.load()
-    },
-    async onFilterChange(f) {
-      this.filters = f || {}
-      this.page = 1
-      await this.load()
-    },
-    async onSortChange(s) {
-      this.sort = s || { by: 'rating', dir: 'desc' }
-      this.page = 1
-      await this.load()
-    },
-    async onPageChange(p) {
-      this.page = p
-      await this.load()
-    }
-  },
-  async onCreate() {
-    await this.load()
-  },
+
   template: `
-    <Element w="1920" h="1080">
-      <Text content="All Recipes" x="100" y="60" />
-      <SearchBar x="100" y="100" @submit="$onSearch" />
-      <SidebarFilters x="100" y="160" @change="$onFilterChange" />
-      <Loader :visible="$loading" x="100" y="220" />
-      <Element :alpha="$loading ? 0 : 1">
-        <Element
-          :for="(item, idx) in $items"
-          :key="$item.id"
-          :x="380 + ($idx % 3) * 420"
-          :y="160 + Math.floor($idx / 3) * 320"
-          w="400"
-          h="300"
-        >
-          <RecipeCard :recipe="$item" />
+    <Element w="1920" h="980" x="0" y="100" color="0x00000000">
+      <!-- Sidebar -->
+      <Element x="40" y="20" w="420" h="940">
+        <SidebarFilters />
+      </Element>
+
+      <!-- Main content -->
+      <Element x="500" y="20" w="1380" h="940">
+        <!-- Search Row -->
+        <Element x="0" y="0" w="1380" h="80">
+          <SearchBar />
+        </Element>
+
+        <!-- Loading / Error -->
+        <Element x="0" y="90" w="1380" h="60" :alpha="$error ? 1 : 0">
+          <Text :content="$error" w="1200" h="60" fontSize="28" color="0xEF4444FF" />
+        </Element>
+        <Element x="0" y="90" w="1380" h="60" :alpha="$loading ? 1 : 0">
+          <Loader />
+        </Element>
+
+        <!-- Grid of recipes -->
+        <Element x="0" :y="$loading || $error ? 160 : 100" w="1380" h="760">
+          <Element
+            :for="(item, index) in $pageItems"
+            :key="$item.id"
+            :x="($index % $gridCols) * (($cardW + $gutter))"
+            :y="Math.floor($index / $gridCols) * ($cardH + $gutter)"
+            :w="$cardW"
+            :h="$cardH"
+          >
+            <RecipeCard :recipe="$item" />
+          </Element>
+        </Element>
+
+        <!-- Pagination -->
+        <Element x="0" y="880" w="1380" h="60">
+          <Pagination />
         </Element>
       </Element>
-      <Pagination
-        :currentPage="$page"
-        :pageSize="$pageSize"
-        :total="$total"
-        x="100"
-        y="880"
-        @change="$onPageChange"
-      />
     </Element>
-  `
+  `,
+
+  computed: {
+    pageItems() {
+      const { filtered, pagination } = store.state
+      const start = (pagination.page - 1) * pagination.pageSize
+      const end = start + pagination.pageSize
+      return filtered.slice(start, end)
+    },
+    loading() {
+      return store.state.loading
+    },
+    error() {
+      return store.state.error
+    },
+  },
+
+  async mounted() {
+    // Ensure favorites in memory then load recipes if not loaded
+    store.hydrateFavorites()
+    if (!store.state.recipes || store.state.recipes.length === 0) {
+      await loadRecipes()
+    } else {
+      // recompute filtered from existing recipes
+      store.setRecipes(store.state.recipes)
+    }
+    // clamp page
+    if (store.state.pagination.page < 1) setPage(1)
+  },
 })
