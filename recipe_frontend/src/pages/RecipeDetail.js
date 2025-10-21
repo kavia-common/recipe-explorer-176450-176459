@@ -3,6 +3,7 @@ import Blits from '@lightningjs/blits'
 /**
  * RecipeDetail Page - Placeholder
  * Displays a simple text to confirm the page is wired later.
+ * Accepts `id` from route param: /recipe/:id
  */
 export default Blits.Component('RecipeDetail', {
   props: ['id'],
